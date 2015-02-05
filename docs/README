@@ -1,0 +1,49 @@
+
+###########################
+### PingTest Java Class ###
+###########################
+
+Invoked by the "pingmonitor" shell script in the machine agent monitors directory.
+
+Command line options:
+
+ -f<...>  Configuration file (default lib/PingTest.cfg)
+          Example: -f/tmp/myconfig.cfg 
+
+ -p<...>  AppDynamics Metric browser path prefix
+          Example: -p"Custom Metric|Network|Ping"
+
+ -x<...>  Ping executable path (default /sbin/ping)
+	  Example: -x/usr/local/bin/ping
+
+ -d       Debug mode (messages written to stderr)
+
+Example output:
+
+  name=Custom Metrics|Network|Ping|<target>|<src>|min,value=...
+  name=Custom Metrics|Network|Ping|<target>|<src>|max,value=...
+  name=Custom Metrics|Network|Ping|<target>|<src>|avg,value=...
+  name=Custom Metrics|Network|Ping|<target>|<src>|stddev,value=...
+  name=Custom Metrics|Network|Ping|<target>|<src>|pktloss,value=...
+  name=Custom Metrics|Network|Ping|<target>|<src>|status,value=...
+
+##########################
+### Configuration File ###
+##########################
+
+The configuration file used by PingTest.java requires one line per target address.
+
+Valid parameters:
+
+  dst (mandatory)
+  count
+  timeout
+  pktsize
+  iface
+
+Examples:
+
+  dst=www.google.co.uk
+  dst=www.bbc.co.uk count=5 timeout=3
+  dst=8.8.8.8 count=5 timeout=3 pktsize=1500 iface=10.20.30.40
+
