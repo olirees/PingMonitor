@@ -16,7 +16,8 @@
         </task-arguments>
         <executable-task>
             <type>file</type>
-            <file os-type="mac">pingmonitor</file>
+            <file os-type="linux">pingmonitor-linux</file>
+            <file os-type="mac">pingmonitor-mac</file>
         </executable-task>
     </monitor-run-task>
 </monitor>

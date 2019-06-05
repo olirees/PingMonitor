@@ -1,0 +1,28 @@
+#!/bin/bash
+
+workdir=$(dirname $0)
+libdir=$workdir/lib
+cd $libdir
+
+#
+# Command line options
+#
+# -f<...>  Configuration file (default lib/PingTest.cfg)
+#          Example: -f/tmp/myconfig.cfg 
+#
+# -p<...>  AppDynamics Metric browser path
+#          Example: -p"Custom Metrics|Network|Ping"  (default)
+#          Example: -p"Server|Component:<tier-id>|Custom Metrics|Network|Ping"
+#
+# -x<...>  Ping executable path (default /bin/ping)
+#	   Example: -x/usr/local/bin/ping
+#
+# -t<...>  Ping type: linux (default) or bsd
+#          Example: -tbsd
+#
+# -d       Debug mode (messages written to stderr)
+#
+
+# For Linux with iputils ping
+java PingTest 
+
