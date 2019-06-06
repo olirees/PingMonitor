@@ -11,10 +11,14 @@ Command line options:
           Example: -f/tmp/myconfig.cfg 
 
  -p<...>  AppDynamics Metric browser path prefix
-          Example: -p"Custom Metric|Network|Ping"
+          Example: -p"Custom Metrics|Network|Ping"  (default)
+          Example: -p"Server|Component:<tier-id>|Custom Metrics|Network|Ping"
 
  -x<...>  Ping executable path (default /sbin/ping)
 	  Example: -x/usr/local/bin/ping
+
+ -t<...>  Ping type: linux (default) or bsd
+          Example: -tbsd
 
  -d       Debug mode (messages written to stderr)
 
