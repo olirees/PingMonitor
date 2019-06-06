@@ -1,7 +1,8 @@
 // PingTest
 //
 // Author: O.Rees
-// Initial Revision: 2015-02-05
+// Initial Revision: 1.0, 2015-02-05
+// This Revision: 1.1, 2019-01-24
 //
 // Example output:
 //
@@ -23,7 +24,8 @@ import java.net.UnknownHostException;
  
 public class PingTest
 {
-	static String pingExe = "/sbin/ping";
+	static String pingExe = "/bin/ping";
+	static String pingType = "linux"; // iputils
 	static String configFile = "PingTest.cfg";
 	static String prefix = "Custom Metrics|Network|Ping";
 	static String srcHost = getSrcHost();
@@ -96,6 +98,10 @@ public class PingTest
 			else if(option.equals("-x"))
 			{
             			if (s.length() > 2) { pingExe = s.substring(2); }
+			}
+			else if(option.equals("-t"))
+			{
+            			if (s.length() > 2) { pingType = s.substring(2); }
 			}
 			else
 			{
@@ -187,7 +193,7 @@ public class PingTest
 
 		PingData(String s, String i, String d, int c, int t, int p)
 		{	
-			if(s != "") { this.src = s; }
+			if(!s.equals("")) { this.src = s; }
 			this.dst = d;
 			this.iface = i;
 			this.count = c;
@@ -321,7 +327,7 @@ public class PingTest
 			}
 
 			String srcName = ref.get_src();
-			if(ref.get_iface() != "") { srcName += "/" + ref.get_iface(); }
+			if(! ref.get_iface().equals("")) { srcName += "/" + ref.get_iface(); }
 
 			String metricPath = String.format("name=%s|%s|%s", prefix, ref.get_dst(), srcName);
 
@@ -341,7 +347,17 @@ public class PingTest
 		List<String> commands = new ArrayList<String>();
 		commands.add(pingExe);
 		commands.add("-c" + t.get_count());
-		commands.add("-t" + t.get_timeout());
+
+		if(pingType.equals("bsd"))
+		{
+			commands.add("-t" + t.get_timeout());
+		}
+		else
+		{
+			// Default to linux
+			commands.add("-w" + t.get_timeout());
+		}
+
 		if(! t.get_iface().equals(""))
 		{
 			commands.add("-I" + t.get_iface());
@@ -360,34 +376,56 @@ public class PingTest
 		BufferedReader stdError = new BufferedReader(new InputStreamReader(process.getErrorStream()));
 		
 		// Example output should include:
-		// 2 packets transmitted, 2 packets received, 0.0% packet loss
-		// round-trip min/avg/max/stddev = 19.367/19.915/20.462/0.547 ms
+		// 
+		// Linux (iputils version)
+		//
+		//     5 packets transmitted, 5 received, 0% packet loss, time 4013ms
+		//     rtt min/avg/max/mdev = 8.094/8.308/8.500/0.174 ms
+		//
+		// BSD (e.g. Mac)
+		//
+		//     2 packets transmitted, 2 packets received, 0.0% packet loss
+		//     round-trip min/avg/max/stddev = 19.367/19.915/20.462/0.547 ms
+		//
 
 		// Read the output from the command
 		while ((s = stdInput.readLine()) != null)
 		{
-			Pattern pattern1 = Pattern.compile("round-trip min/avg/max/stddev = (\\d+)\\.\\d+/(\\d+)\\.\\d+/(\\d+)\\.\\d+/(\\d+)\\.\\d+ ms");
-			Matcher matcher1 = pattern1.matcher(s);
-			if(matcher1.find())
+			Pattern pattern;
+			Matcher matcher;
+
+			pattern = Pattern.compile("^r.+dev = (\\d+)\\.\\d+/(\\d+)\\.\\d+/(\\d+)\\.\\d+/(\\d+)\\.\\d+ ms");
+			matcher = pattern.matcher(s);
+			if(matcher.find())
 			{
-				t.set_min(Integer.parseInt(matcher1.group(1)));
-				t.set_max(Integer.parseInt(matcher1.group(2)));
-				t.set_avg(Integer.parseInt(matcher1.group(3)));
-				t.set_stddev(Integer.parseInt(matcher1.group(4)));
+				t.set_min(Integer.parseInt(matcher.group(1)));
+				t.set_max(Integer.parseInt(matcher.group(2)));
+				t.set_avg(Integer.parseInt(matcher.group(3)));
+				t.set_stddev(Integer.parseInt(matcher.group(4)));
 				continue;
 			}
 
-			Pattern pattern2 = Pattern.compile(".+ ([0-9]+)\\.([0-9]+)% packet loss");
-			Matcher matcher2 = pattern2.matcher(s);
-			if(matcher2.find())
+			// The BSD Format
+			pattern = Pattern.compile(".+ ([0-9]+)\\.([0-9]+)% packet loss");
+			matcher = pattern.matcher(s);
+			if(matcher.find())
 			{
-				int pktloss = Integer.parseInt(matcher2.group(1));
-				int fraction = Integer.parseInt(matcher2.group(2));
+				int pktloss = Integer.parseInt(matcher.group(1));
+				int fraction = Integer.parseInt(matcher.group(2));
 
 				// Ensure loss of less than a percent shows up
 				if((pktloss == 0) && (fraction > 0)) { pktloss = 1; }
 
 				t.set_pktloss(pktloss);
+				continue;
+			}
+
+			// The Linux Format
+			pattern = Pattern.compile(".+ ([0-9]+)% packet loss,.+");
+			matcher = pattern.matcher(s);
+			if(matcher.find())
+			{
+				t.set_pktloss(Integer.parseInt(matcher.group(1)));
 				continue;
 			}
 		}
